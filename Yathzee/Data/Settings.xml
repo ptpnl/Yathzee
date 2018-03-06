@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<Settings>
+	<Dice>
+		<!-- The ammount of dices are used to play the game -->
+		<!-- Min value is 1 max 7 -->
+		<DiceCount value="5" />
+		<!-- Amount of rolls avaible in a turn -->
+		<DiceRolls value="3" />
+	</Dice>
+	<Score>
+		<LeftBonus value="35" />
+		<FullHouse value="25" />
+		<SmallStraight value="30" />
+		<LargeStraight value="40" />
+		<Yahtzee value="50" />
+		<YahtzeeBonus value="100" />
+	</Score>
+	<LastSaveFileActoin value="null"/>
+</Settings>
