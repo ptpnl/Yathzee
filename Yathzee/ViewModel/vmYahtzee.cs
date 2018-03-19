@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -22,23 +23,37 @@ namespace Yahtzee.ViewModel
 {
 	public class vmYahtzee : INotifyPropertyChanged
 	{
+		#region Instance vars
 		private vYathzee viewYathzee;
 
 		private uSettings settings;
+
 		private cScore scoreController;
+		private cDice dices;
 
 		private ObservableCollection<mPlayer> players;
 		private mPlayer currentPlayer, selectedPlayer;
 
-		private cDice dices;
-
 		Brush lblDefaultBackground;
 
-		private List<Label> scoreBoxes;
+		private Dictionary<string, ScoreBox> scoreBoxes;
+		private Dictionary<string, ScoreBox> scoreableBoxes;
 		private List<CheckBox> checkBoxes;
 
 		private bool cheats, debug;
 		private int diceRolls;
+
+		public uSettings Settings
+		{
+			get { return settings; }
+			set { settings = value; }
+		}
+
+		public cScore ScoreController
+		{
+			get { return scoreController; }
+			private set { scoreController = value; }
+		}
 
 		public cDice DiceController
 		{
@@ -57,7 +72,12 @@ namespace Yahtzee.ViewModel
 			private set { debug = value; }
 		}
 
-		public List<Label> ScoreBoxes
+		public Dictionary<string, ScoreBox> ScoreableBoxes
+		{
+			get { return scoreableBoxes; }
+			set { scoreableBoxes = value; }
+		}
+		public Dictionary<string, ScoreBox> ScoreBoxes
 		{
 			get { return scoreBoxes; }
 			set { scoreBoxes = value; }
@@ -77,7 +97,7 @@ namespace Yahtzee.ViewModel
 		List<Rectangle> diceRectangle;
 		List<Ellipse> diceFaceValue;
 
-		private bool canRollDice, canAddScore, canNextTurn;
+		private bool canRollDice, canAddScore, canNextTurn, canToggleDice;
 
 		public mPlayer CurrentPlayer
 		{
@@ -97,6 +117,7 @@ namespace Yahtzee.ViewModel
 				OnPropertyChanged();
 			}
 		}
+		#endregion
 
 		#region Commands
 		#region Menu Commands
@@ -190,11 +211,13 @@ namespace Yahtzee.ViewModel
 			diceRectangle = new List<Rectangle>();
 			diceFaceValue = new List<Ellipse>();
 
-			settings = new uSettings();
+			settings = LoadSettingsFile();
 			scoreController = new cScore(settings);
 
 			players = new ObservableCollection<mPlayer>();
 			currentPlayer = new mPlayer();
+			ScoreBoxes = new Dictionary<string, ScoreBox>();
+			ScoreableBoxes = new Dictionary<string, ScoreBox>();
 
 			dices = new cDice(settings.DiceCount);
 			dices.RollDice();
@@ -206,7 +229,9 @@ namespace Yahtzee.ViewModel
 			cheats = debug = false;
 			diceRolls = 0;
 
-			#region Commands
+			LoadSettingsFile();
+
+			#region Commands Inits
 			// Menu File Actions
 			newGamePlayersCommand= new RelayCommand(NewGameWithPlayerCommand);
 			newGamePlayerVsAI = new RelayCommand(NewGameWithAICommand);
@@ -221,15 +246,34 @@ namespace Yahtzee.ViewModel
 			// game Actions
 			rollDiceCommand = new RelayCommand(RollDices, param => canRollDice);
 			addScoreCommand = new RelayCommand(AddScore, param => canAddScore);
-			addCheatScoreCommand = new RelayCommand(AddCheatScore, param => Cheats);
+			addCheatScoreCommand = new RelayCommand(AddScore, param => Cheats);
 			nextTurnCommand = new RelayCommand(NextTurn, param => canNextTurn);
 
 			// Listbox Commands
 			selectedItemChangedCommand = new RelayCommand(SelectedIndexChanged);
 
 			// command canExecute flags
-			canRollDice = canAddScore = canNextTurn = false;
+			canRollDice = canAddScore = canNextTurn = canToggleDice = false;
 			#endregion
+		}
+
+		// todo read settings file
+		private uSettings LoadSettingsFile()
+		{
+			uSettings settings = new uSettings();
+			DirectoryInfo dir = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory + "\\Data");
+			FileInfo file = new FileInfo(dir.FullName + "\\Settings.xml");
+			if (!dir.Exists)
+			{
+				dir.Create();
+				file.Create();
+			}
+			else if(!file.Exists)
+			{
+				file.Create();
+			}
+
+			return settings;
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -242,9 +286,58 @@ namespace Yahtzee.ViewModel
 
 		public void GetScoreBoxes()
 		{
-			scoreBoxes = new List<Label>();
+			List<Label> scoreBoxes2 = new List<Label>();
 			checkBoxes = new List<CheckBox>();
-			viewYathzee.EnumVisual(viewYathzee.grdScoreBoxes, ref scoreBoxes, ref checkBoxes);
+			viewYathzee.EnumVisual(viewYathzee.grdScoreBoxes, ref scoreBoxes2, ref checkBoxes);
+
+			foreach (var item in scoreBoxes2)
+			{
+				switch (item.Name)
+				{
+					case "txtOnes":
+						scoreBoxes.Add(item.Name, new ScoreBox(item, 1, 5));
+						break;
+					case "txtTwos":
+						scoreBoxes.Add(item.Name, new ScoreBox(item, 2, 10));
+						break;
+					case "txtThrees":
+						scoreBoxes.Add(item.Name, new ScoreBox(item, 3, 15));
+						break;
+					case "txtFours":
+						scoreBoxes.Add(item.Name, new ScoreBox(item, 4, 20));
+						break;
+					case "txtFives":
+						scoreBoxes.Add(item.Name, new ScoreBox(item, 5, 25));
+						break;
+					case "txtSixes":
+						scoreBoxes.Add(item.Name, new ScoreBox(item, 6, 30));
+						break;
+					case "txt3AKind":
+						scoreBoxes.Add(item.Name, new ScoreBox(item, 3, 18));
+						break;
+					case "txt4AKind":
+						scoreBoxes.Add(item.Name, new ScoreBox(item, 4, 24));
+						break;
+					case "txtFullHouse":
+						scoreBoxes.Add(item.Name, new ScoreBox(item, settings.FullHouse));
+						break;
+					case "txtSmStraight":
+						scoreBoxes.Add(item.Name, new ScoreBox(item, settings.SmallStraight));
+						break;
+					case "txtLgStraight":
+						scoreBoxes.Add(item.Name, new ScoreBox(item, settings.LargeStraight));
+						break;
+					case "txtChance":
+						scoreBoxes.Add(item.Name, new ScoreBox(item, 5, 30));
+						break;
+					case "txtYahtzee":
+						scoreBoxes.Add(item.Name, new ScoreBox(item, settings.Yahtzee));
+						break;
+					default:
+						
+						break;
+				}
+			}
 		}
 
 		#region Menu Commands
@@ -283,9 +376,17 @@ namespace Yahtzee.ViewModel
 			MenuItem temp = obj as MenuItem;
 			Cheats = !Cheats;
 			if (cheats)
+			{
 				temp.Header = "Disable _Cheats";
+				// reset diceROlls so you can continue rolling
+				diceRolls = 2;
+				canRollDice = canToggleDice = true;
+				RollDiceCommand.CanExecute(new Object());
+			}
 			else
+			{
 				temp.Header = "Enable _Cheats";
+			}
 		}
 
 		private void ToggleDebug(object obj)
@@ -323,18 +424,17 @@ namespace Yahtzee.ViewModel
 		private void RollDices(object obj)
 		{
 			canRollDice = RollDices();
-			canAddScore = true;
+			canAddScore = canToggleDice = true;
 			AddScoreCommand.CanExecute(new Object());
 		}
 
 		private void NextTurn(object obj)
 		{
 			canRollDice = NextTurn();
-			canAddScore = false;
+			canAddScore = canNextTurn = canToggleDice = false;
 			AddScoreCommand.CanExecute(new Object());
-			ResetDiceRectangle();
-			canNextTurn = false;
 			NextTurnCommand.CanExecute(new Object());
+			ResetDiceRectangle();
 		}
 
 		private void AddScore(object obj)
@@ -346,28 +446,26 @@ namespace Yahtzee.ViewModel
 			NextTurnCommand.CanExecute(new Object());
 		}
 
-		private void AddCheatScore(object obj)
-		{
-			AddCheatScore(obj as Label);
-		}
-
 		private void ToggleDiceState(Rectangle _rect)
 		{
-			int i = 0;
-			foreach (var item in diceRectangle)
+			if (canToggleDice)
 			{
-				if (item == _rect)
+				int i = 0;
+				foreach (var item in diceRectangle)
 				{
-					DiceController.ChangeDiceState(i);
-					break;
+					if (item == _rect)
+					{
+						DiceController.ChangeDiceState(i);
+						break;
+					}
+					++i;
 				}
-				++i;
-			}
 
-			if (DiceController.Dices.ElementAt(i).DiceState == eDiceState.Unlocked)
-				_rect.Stroke = Brushes.Black;
-			else
-				_rect.Stroke = Brushes.Red;
+				if (DiceController.Dices.ElementAt(i).DiceState == eDiceState.Unlocked)
+					_rect.Stroke = Brushes.Black;
+				else
+					_rect.Stroke = Brushes.Red;
+			}
 		}
 		#endregion
 
@@ -388,10 +486,6 @@ namespace Yahtzee.ViewModel
 			RollDices();
 		}
 
-		/// <summary>
-		/// 
-		/// </summary>
-		/// <returns></returns>
 		private bool RollDices()
 		{
 			if (diceRolls < settings.DiceRolls)
@@ -399,12 +493,38 @@ namespace Yahtzee.ViewModel
 				if (!cheats)
 					++diceRolls;
 
+				// reset highlighted boxes
+				foreach (var item in scoreableBoxes)
+					item.Value.Label.Background = lblDefaultBackground;
+
+				ScoreableBoxes.Clear();
+
 				dices.RollDice();
 				RedrawFaceValues();
 				AddDiceFaceValuesToScore();
+
+				// Highlight plausable scoreboxes
+				if(players.Count > 0)
+					HighlightScoreBoxes();
+
 				return true;
 			}
 			return false;
+		}
+
+		private void HighlightScoreBoxes()
+		{
+			foreach (var item in scoreBoxes)
+			{
+				if (String.IsNullOrEmpty(item.Value.Label.Content.ToString()))
+				{
+					if (scoreController.CalculateScore(item.Value.Label.Name) > 0)
+					{
+						item.Value.Label.Background = Brushes.LimeGreen;
+						scoreableBoxes.Add(item.Key, item.Value);
+					}
+				}
+			}
 		}
 
 		private bool NextTurn()
@@ -413,8 +533,13 @@ namespace Yahtzee.ViewModel
 			scoreController.ResetScoreValues();
 			dices.UnlockDiceState();
 
-			foreach (var item in ScoreBoxes)
-				item.Background = lblDefaultBackground;
+			// reset highlighted boxes
+			foreach (var item in scoreableBoxes)
+				item.Value.Label.Background = lblDefaultBackground;
+
+			// reset yahtzee bonus checkBoxes
+			foreach (var item in CheckBoxes)
+				item.IsChecked = false;
 
 			if (currentPlayer.PlayerId < players.Count)
 				CurrentPlayer = SelectedPlayer = players.ElementAt(currentPlayer.PlayerId);
@@ -422,6 +547,10 @@ namespace Yahtzee.ViewModel
 				CurrentPlayer = SelectedPlayer = players.First();
 
 			ViewYathzee.lbPlayer.SelectedIndex = CurrentPlayer.PlayerId - 1;
+
+			// set yahtzee bonus checkBoxes
+			for (int i = 0; i < currentPlayer.PlayerScore.YahtzeeBonusCount; i++)
+				checkBoxes.ElementAt(i).IsChecked = true;
 
 			return true;
 		}
@@ -435,19 +564,11 @@ namespace Yahtzee.ViewModel
 		{
 			if (currentPlayer.PlayerId == selectedPlayer.PlayerId && String.IsNullOrEmpty(_lbl.Content.ToString()))
 			{
-				_lbl.Content = scoreController.CalculateScore(_lbl.Name);
-				canAddScore = false;
-				AddScoreCommand.CanExecute(new Object());
-			}
-		}
-		
-		private void AddCheatScore(Label _lbl)
-		{
-			if (currentPlayer.PlayerId == selectedPlayer.PlayerId)
-				_lbl.Content = scoreController.CalculateScore(_lbl.Name, true);
+				_lbl.Content = scoreController.CalculateScore(_lbl.Name, cheats);
 
-			canAddScore = false;
-			AddScoreCommand.CanExecute(new Object());
+				// reset label highlight
+				_lbl.Background = lblDefaultBackground;
+			}
 		}
 
 		#region Draw dice and faceValues
@@ -707,11 +828,6 @@ namespace Yahtzee.ViewModel
 			ViewYathzee.cvsDiceRoll.Children.Add(CreateEllipse(name + _rect.Name, size, left, top, left, left));
 		}
 		#endregion
-
-		private void NewPlayers(object obj)
-		{
-			CreatePlayer(1);
-		}
 
 		public void CreatePlayer(int _count, string _name = "Player")
 		{

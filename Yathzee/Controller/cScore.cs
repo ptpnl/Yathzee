@@ -37,6 +37,7 @@ namespace Yahtzee.Controller
 			}
 		}
 
+		#region Score checks
 		public int CalculateScore(string _boxName, bool _cheats = false)
 		{
 			int score = 0;
@@ -171,7 +172,7 @@ namespace Yahtzee.Controller
 			
 			int score = 0;
 			for (int i = 0; i < scoreValues.Length; i++)
-				score += scoreValues[i] + (i + 1);
+				score += (scoreValues[i] * (i + 1));
 
 			return score;
 		}
@@ -179,10 +180,10 @@ namespace Yahtzee.Controller
 		private int CheckYahtzee(bool _cheats)
 		{
 			if (_cheats)
-				return settings.Yathzee;
+				return settings.Yahtzee;
 
 			if (scoreValues.Contains(5))
-				return settings.Yathzee;
+				return settings.Yahtzee;
 
 			return 0;
 		}
@@ -197,6 +198,11 @@ namespace Yahtzee.Controller
 			}
 			return count;
 		}
+		#endregion
 
+		internal int GetFaceValueScore(int _value)
+		{
+			return scoreValues[_value - 1] * _value;
+		}
 	}
 }

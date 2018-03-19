@@ -55,12 +55,12 @@ namespace Yahtzee.util
 			get { return largeStraight; }
 			set { largeStraight = value; }
 		}
-		public int Yathzee
+		public int Yahtzee
 		{
 			get { return yathzee; }
 			set { yathzee = value; }
 		}
-		public int YathzeeBonus
+		public int YahtzeeBonus
 		{
 			get { return yathzeeBonus; }
 			set { yathzeeBonus = value; }

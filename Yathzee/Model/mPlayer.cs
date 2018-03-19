@@ -9,11 +9,12 @@ namespace Yahtzee.Model
 		private int playerId, playerTurns;
 		private string playerName;
 		private mPlayerScore playerScore;
-
+		private bool isAI;
+		
 		public int PlayerId
 		{
 			get { return playerId; }
-			private set { playerId = value; }
+			set { playerId = value; }
 		}
 		public string PlayerName
 		{
@@ -33,6 +34,12 @@ namespace Yahtzee.Model
 				OnPropertyChanged("PlayerTurns");
 			}
 		}
+		public bool IsAI
+		{
+			get { return isAI; }
+			set { isAI = value; }
+		}
+		
 		public mPlayerScore PlayerScore
 		{
 			get { return playerScore; }
@@ -44,16 +51,15 @@ namespace Yahtzee.Model
 		}
 		
 		public mPlayer() :
-			this(-1, "player")
-		{
-			
-		}
+			this(-1, "player", false)
+		{ }
 
-		public mPlayer(int _id = -1, string _name = "Player")
+		public mPlayer(int _id = -1, string _name = "Player", bool _ai = false)
 		{
 			PlayerId = _id;
 			PlayerName = _name;
 			PlayerTurns = 0;
+			IsAI = _ai;
 			PlayerScore = new mPlayerScore();
 		}
 

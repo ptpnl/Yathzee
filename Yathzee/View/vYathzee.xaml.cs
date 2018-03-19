@@ -61,10 +61,5 @@ namespace Yahtzee.View
 		{
 			MessageBox.Show("How to play!!");
 		}
-
-		private void lbPlayer_SelectionChanged(object sender, SelectionChangedEventArgs e)
-		{
-
-		}
 	}
 }

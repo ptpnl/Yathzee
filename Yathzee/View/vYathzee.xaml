@@ -237,6 +237,7 @@
 				Command="{Binding NextTurnCommand}" />
 
 		<TextBlock HorizontalAlignment="Left" Margin="10,455,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Height="104" Width="772">
+			http://www.math.cornell.edu/~mec/2006-2007/Probability/Yahtzee.htm, game rules <LineBreak/>
 			add HowToPlay screen <LineBreak/>
 		</TextBlock>
 	</Grid>

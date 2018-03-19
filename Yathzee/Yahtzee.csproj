@@ -113,9 +113,14 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="Controller\cGame.cs" />
+    <Compile Include="Controller\AI\AiHandeler.cs" />
+    <Compile Include="Controller\AI\Strategies\LeftSide\EqualFaceValue.cs" />
+    <Compile Include="Controller\AI\Strategies\Strategy.cs" />
+    <Compile Include="Controller\AI\Strategies\StrategyFactory.cs" />
+    <Compile Include="Controller\cFileHandeler.cs" />
     <Compile Include="Controller\cScore.cs" />
-    <Compile Include="Controller\cXmalPharser.cs" />
+    <Compile Include="Controller\cXmlParser.cs" />
+    <Compile Include="util\ScoreBox.cs" />
     <Compile Include="util\uSettings.cs" />
     <Compile Include="ViewModel\Commands\RelayCommand.cs" />
     <Compile Include="Controller\cDice.cs" />
